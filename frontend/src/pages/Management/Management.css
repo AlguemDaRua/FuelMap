@@ -1,0 +1,222 @@
+.management {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: calc(100vh - 58px);
+  background: #F5F5F0;
+}
+
+.management-sidebar {
+  background: white;
+  border-right: 1px solid #E5E7EB;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-bomba {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px 16px;
+  border-bottom: 1px solid #E5E7EB;
+  margin-bottom: 8px;
+}
+
+.sidebar-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #D4500A;
+  flex-shrink: 0;
+}
+
+.sidebar-nome {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1A1A2E;
+  margin: 0;
+}
+
+.sidebar-gestor {
+  font-size: 11px;
+  color: #6B7280;
+  margin: 0;
+}
+
+.sidebar-section {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 12px 16px 4px;
+}
+
+.sidebar-item {
+  padding: 9px 16px;
+  font-size: 13px;
+  color: #6B7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sidebar-item:hover {
+  background: #F5F5F0;
+  color: #1A1A2E;
+}
+
+.sidebar-item.active {
+  background: #FDE8D5;
+  color: #D4500A;
+  font-weight: 600;
+  border-right: 3px solid #D4500A;
+}
+
+.sidebar-back {
+  margin-top: auto;
+  padding: 16px;
+  font-size: 12px;
+  color: #D4500A;
+  text-decoration: none;
+}
+
+.management-content {
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.management-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.management-topbar h1 {
+  font-size: 20px;
+  color: #1A1A2E;
+  margin: 0;
+}
+
+.management-update {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.management-alert {
+  background: #FEF3CD;
+  border: 1px solid #FAC775;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #7A5200;
+  margin-bottom: 16px;
+}
+
+.management-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.metric-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #6B7280;
+  margin: 0 0 4px;
+}
+
+.metric-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1A1A2E;
+  margin: 0 0 2px;
+}
+
+.metric-sub {
+  font-size: 11px;
+  color: #9CA3AF;
+  margin: 0;
+}
+
+.management-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.management-card {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.management-card h3 {
+  font-size: 14px;
+  color: #1A1A2E;
+  margin: 0 0 14px;
+}
+
+.management-btn {
+  display: block;
+  margin-top: 14px;
+  text-align: center;
+  padding: 9px;
+  background: #D4500A;
+  color: white;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.management-btn:hover {
+  background: #F4845F;
+}
+
+.management-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.management-table th {
+  text-align: left;
+  font-size: 11px;
+  color: #9CA3AF;
+  font-weight: 600;
+  padding: 6px 0;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.management-table td {
+  padding: 8px 0;
+  color: #374151;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.badge-table {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.badge-green {
+  background: #D4F1EF;
+  color: #0B3954;
+}
+
+.badge-yellow {
+  background: #FEF3CD;
+  color: #7A5200;
+}
