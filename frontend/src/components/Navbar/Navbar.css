@@ -39,8 +39,29 @@
   padding: 6px 14px;
   border-radius: 6px;
   font-weight: bold;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  text-decoration: none;
 }
 
 .navbar-btn:hover {
   background: #F4845F;
+}
+
+.navbar-btn-outline {
+  background: transparent;
+  color: #F4845F !important;
+  border: 1.5px solid #F4845F;
+  padding: 5px 13px;
+}
+
+.navbar-btn-outline:hover {
+  background: rgba(244, 132, 95, 0.12);
+}
+
+.navbar-user {
+  color: #aab4c4;
+  font-size: 13px;
+  font-weight: 500;
 }

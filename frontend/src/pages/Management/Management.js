@@ -1,29 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import StockBar from '../../components/StockBar/StockBar';
+import { stationService } from '../../services/stationService';
+import { abastecimentoService } from '../../services/abastecimentoService';
+import { useAuth } from '../../context/AuthContext';
+import { normalizeStation, normalizeRecord } from '../../utils/normalizers';
 import './Management.css';
 
-const mockBomba = {
-  nome: 'Petromoc — Av. Julius Nyerere',
-  gestor: 'João Macuácua',
-  combustiveis: [
-    { tipo: 'Gasolina', quantidade: 8400, maximo: 15000 },
-    { tipo: 'Gasóleo', quantidade: 12100, maximo: 20000 },
-    { tipo: 'GPL', quantidade: 800, maximo: 5000 },
-  ],
-  vendas: [
-    { hora: '09:42', tipo: 'Gasolina', litros: 45, estado: 'ok' },
-    { hora: '09:38', tipo: 'Gasóleo', litros: 80, estado: 'ok' },
-    { hora: '09:21', tipo: 'GPL', litros: 12, estado: 'baixo' },
-    { hora: '09:10', tipo: 'Gasolina', litros: 60, estado: 'ok' },
-  ]
-};
-
 function Management() {
+  const { user } = useAuth();
   const [activePage, setActivePage] = useState('dashboard');
+  const [bomba, setBomba] = useState(null);
+  const [vendas, setVendas] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const totalStock = mockBomba.combustiveis.reduce((acc, c) => acc + c.quantidade, 0);
-  const temAlerta = mockBomba.combustiveis.some(c => (c.quantidade / c.maximo) < 0.2);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Obter todas as bombas e selecionar a primeira (para efeitos de demo)
+        const stations = await stationService.getAll();
+        if (stations.length > 0) {
+          // No mundo real, a API devolveria a bomba associada ao utilizador logado
+          const stationNormalizada = normalizeStation(stations[0]);
+          setBomba({ ...stationNormalizada, gestor: user?.name || 'Gestor' });
+
+          // Obter histórico de abastecimentos para esta bomba
+          const records = await abastecimentoService.getByStation(stations[0].id);
+          setVendas(records.map(normalizeRecord));
+        }
+      } catch (err) {
+        console.error('Erro ao carregar dados da gestão:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [user]);
+
+  if (loading) {
+    return <div className="management-loading">A carregar os dados da bomba...</div>;
+  }
+
+  if (!bomba) {
+    return (
+      <div className="management-loading">
+        <p>Nenhum posto de combustível associado a esta conta.</p>
+        <Link to="/register" style={{ marginTop: '10px', display: 'inline-block', color: '#D4500A' }}>
+          Registar uma bomba
+        </Link>
+      </div>
+    );
+  }
+
+  const totalStock = bomba.combustiveis.reduce((acc, c) => acc + c.quantidade, 0);
+  const temAlerta = bomba.combustiveis.some(c => c.maximo > 0 && (c.quantidade / c.maximo) < 0.2);
+
+  // Calcular litros vendidos (simulado ou baseado nos registos de abastecimento)
+  // Como os registos são de *abastecimento* (entrada) e não *venda* (saída), vamos somar os abastecimentos
+  const totalEntradas = vendas.reduce((acc, v) => acc + parseInt(v.litros), 0);
 
   return (
     <div className="management">
@@ -31,8 +65,8 @@ function Management() {
         <div className="sidebar-bomba">
           <div className="sidebar-dot"></div>
           <div>
-            <p className="sidebar-nome">{mockBomba.nome}</p>
-            <p className="sidebar-gestor">{mockBomba.gestor}</p>
+            <p className="sidebar-nome">{bomba.nome}</p>
+            <p className="sidebar-gestor">{bomba.gestor}</p>
           </div>
         </div>
 
@@ -72,13 +106,13 @@ function Management() {
 
       <div className="management-content">
         <div className="management-topbar">
-          <h1>Dashboard</h1>
-          <span className="management-update">Actualizado há 12s</span>
+          <h1>{activePage.charAt(0).toUpperCase() + activePage.slice(1)}</h1>
+          <span className="management-update">Actualizado agora</span>
         </div>
 
         {temAlerta && (
           <div className="management-alert">
-            ⚠ GPL abaixo do limiar mínimo. Considere agendar reabastecimento.
+            ⚠ Um ou mais combustíveis estão abaixo de 20% do limite. Considere reabastecer.
           </div>
         )}
 
@@ -89,26 +123,26 @@ function Management() {
             <p className="metric-sub">litros disponíveis</p>
           </div>
           <div className="metric-card">
-            <p className="metric-label">Vendido hoje</p>
-            <p className="metric-value">4.820</p>
-            <p className="metric-sub">litros vendidos</p>
+            <p className="metric-label">Entradas (Histórico)</p>
+            <p className="metric-value">{totalEntradas.toLocaleString()}</p>
+            <p className="metric-sub">litros abastecidos</p>
           </div>
           <div className="metric-card">
             <p className="metric-label">Estimativa stock</p>
-            <p className="metric-value">~18h</p>
+            <p className="metric-value">{bomba.estado === 'baixo' ? '< 5h' : '~18h'}</p>
             <p className="metric-sub">ao ritmo actual</p>
           </div>
           <div className="metric-card">
             <p className="metric-label">Último abastec.</p>
-            <p className="metric-value">Hoje</p>
-            <p className="metric-sub">08:30 · 15.000 L</p>
+            <p className="metric-value">{vendas.length > 0 ? 'Hoje' : 'N/A'}</p>
+            <p className="metric-sub">{vendas.length > 0 ? `${vendas[0].hora} · ${vendas[0].litros} L` : 'Sem registos'}</p>
           </div>
         </div>
 
         <div className="management-row">
           <div className="management-card">
             <h3>Stock por combustível</h3>
-            {mockBomba.combustiveis.map(c => (
+            {bomba.combustiveis.map(c => (
               <StockBar
                 key={c.tipo}
                 tipo={c.tipo}
@@ -122,31 +156,35 @@ function Management() {
           </div>
 
           <div className="management-card">
-            <h3>Últimas vendas via API</h3>
-            <table className="management-table">
-              <thead>
-                <tr>
-                  <th>Hora</th>
-                  <th>Tipo</th>
-                  <th>Litros</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockBomba.vendas.map((v, i) => (
-                  <tr key={i}>
-                    <td>{v.hora}</td>
-                    <td>{v.tipo}</td>
-                    <td>{v.litros} L</td>
-                    <td>
-                      <span className={`badge-table ${v.estado === 'ok' ? 'badge-green' : 'badge-yellow'}`}>
-                        {v.estado === 'ok' ? 'Registado' : 'Stock baixo'}
-                      </span>
-                    </td>
+            <h3>Últimos Abastecimentos Registados</h3>
+            <div style={{ overflowX: 'auto' }}>
+              <table className="management-table">
+                <thead>
+                  <tr>
+                    <th>Data</th>
+                    <th>Hora</th>
+                    <th>Tipo</th>
+                    <th>Litros</th>
+                    <th>Operador</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {vendas.length === 0 ? (
+                    <tr><td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>Nenhum abastecimento registado.</td></tr>
+                  ) : (
+                    vendas.map((v, i) => (
+                      <tr key={i}>
+                        <td>{new Date(v.data).toLocaleDateString('pt-PT')}</td>
+                        <td>{v.hora}</td>
+                        <td>{v.tipo}</td>
+                        <td>{v.litros} L</td>
+                        <td>{v.operador}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

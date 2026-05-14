@@ -1,10 +1,15 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { stationService } from '../../services/stationService';
+import { fuelService } from '../../services/fuelService';
 import './Register.css';
 
 function Register() {
+  const { register } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({
-    nome: '',
+    nomeBomba: '',
     provedor: '',
     provincia: '',
     cidade: '',
@@ -13,9 +18,12 @@ function Register() {
     email: '',
     password: ''
   });
+  const [erro, setErro] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setErro('');
   };
 
   const handleCombustivel = (tipo) => {
@@ -25,12 +33,59 @@ function Register() {
     setForm({ ...form, combustiveis: lista });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Registo:', form);
+    if (form.combustiveis.length === 0) {
+      setErro('Seleccione pelo menos um tipo de combustível.');
+      return;
+    }
+
+    setLoading(true);
+    setErro('');
+    
+    try {
+      // 1. Registar o gestor (User)
+      await register({
+        name: 'Gestor ' + form.nomeBomba, // Nome genérico para o gestor
+        email: form.email,
+        password: form.password,
+        role: 'gestor'
+      });
+
+      // 2. Criar a Bomba (Station) - O token já está no localStorage pelo authService
+      const newStation = await stationService.create({
+        name: form.nomeBomba,
+        address: form.bairro + ', ' + form.cidade,
+        city: form.cidade,
+        district: form.bairro,
+        provider: form.provedor,
+        latitude: -25.9625, // Mock coords
+        longitude: 32.5832
+      });
+
+      // 3. Adicionar Combustíveis (Fuels) selecionados à bomba
+      for (const tipo of form.combustiveis) {
+        await fuelService.addFuel({
+          station_id: newStation.id,
+          type: tipo,
+          price: 0,
+          stock_liters: 0,
+          max_capacity: 15000
+        });
+      }
+
+      // Redirecionar para a gestão
+      navigate('/gestao');
+
+    } catch (err) {
+      const msg = err?.response?.data?.error || 'Erro ao registar bomba. Verifique os dados.';
+      setErro(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const combustiveis = ['Gasolina', 'Gasóleo', 'GPL', 'Jet A1'];
+  const combustiveisLista = ['Gasolina', 'Gasóleo', 'GPL', 'Jet A1'];
 
   return (
     <div className="register-page">
@@ -42,21 +97,24 @@ function Register() {
         <h2>Registar bomba</h2>
         <p className="register-sub">Preencha os dados do seu posto de combustível</p>
 
+        {erro && <div className="register-erro">{erro}</div>}
+
         <form onSubmit={handleSubmit}>
           <div className="register-field">
             <label>Nome da bomba / posto</label>
             <input
               type="text"
-              name="nome"
+              name="nomeBomba"
               placeholder="Ex: Petromoc Av. Julius Nyerere"
               onChange={handleChange}
+              value={form.nomeBomba}
               required
             />
           </div>
 
           <div className="register-field">
             <label>Fornecedora / provedor</label>
-            <select name="provedor" onChange={handleChange} required>
+            <select name="provedor" onChange={handleChange} value={form.provedor} required>
               <option value="">Seleccionar provedor</option>
               <option value="petromoc">Petromoc</option>
               <option value="galp">Galp</option>
@@ -68,7 +126,7 @@ function Register() {
           <div className="register-row">
             <div className="register-field">
               <label>Província</label>
-              <select name="provincia" onChange={handleChange} required>
+              <select name="provincia" onChange={handleChange} value={form.provincia} required>
                 <option value="">Seleccionar</option>
                 <option value="maputo">Maputo</option>
                 <option value="sofala">Sofala</option>
@@ -82,6 +140,7 @@ function Register() {
                 name="cidade"
                 placeholder="Ex: Maputo Cidade"
                 onChange={handleChange}
+                value={form.cidade}
                 required
               />
             </div>
@@ -94,6 +153,7 @@ function Register() {
               name="bairro"
               placeholder="Ex: Sommerschield, Av. 24 de Julho"
               onChange={handleChange}
+              value={form.bairro}
               required
             />
           </div>
@@ -101,7 +161,7 @@ function Register() {
           <div className="register-field">
             <label>Tipos de combustível disponíveis</label>
             <div className="register-chips">
-              {combustiveis.map(tipo => (
+              {combustiveisLista.map(tipo => (
                 <div
                   key={tipo}
                   className={`register-chip ${form.combustiveis.includes(tipo) ? 'active' : ''}`}
@@ -120,6 +180,7 @@ function Register() {
               name="email"
               placeholder="gestor@bomba.co.mz"
               onChange={handleChange}
+              value={form.email}
               required
             />
           </div>
@@ -131,11 +192,15 @@ function Register() {
               name="password"
               placeholder="••••••••"
               onChange={handleChange}
+              value={form.password}
               required
+              minLength={6}
             />
           </div>
 
-          <button type="submit" className="register-btn">Submeter registo</button>
+          <button type="submit" className="register-btn" disabled={loading}>
+            {loading ? 'A registar...' : 'Submeter registo'}
+          </button>
         </form>
 
         <div className="register-links">
