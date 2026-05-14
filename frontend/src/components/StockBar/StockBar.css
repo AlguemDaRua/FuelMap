@@ -1,0 +1,33 @@
+.stockbar {
+  margin-bottom: 12px;
+}
+
+.stockbar-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.stockbar-tipo {
+  font-size: 13px;
+  color: #111827;
+  font-weight: 500;
+}
+
+.stockbar-quantidade {
+  font-size: 13px;
+  color: #6B7280;
+}
+
+.stockbar-track {
+  height: 6px;
+  background: #E5E7EB;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.stockbar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
