@@ -1,17 +1,28 @@
-CREATE DATABASE IF NOT EXISTS `fuelmap_db`;
-USE `fuelmap_db`;
+DROP TABLE IF EXISTS `refueling_records`;
+DROP TABLE IF EXISTS `fuels`;
+DROP TABLE IF EXISTS `stations`;
+DROP TABLE IF EXISTS `users`;
 
-CREATE TABLE IF NOT EXISTS `users` (
-  `id`            INT NOT NULL AUTO_INCREMENT,
+-- =============================================
+-- TABELA DE UTILIZADORES
+-- Suporta: admin, gestor, usuario
+-- =============================================
+CREATE TABLE `users` (
+  `id`            INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name`          VARCHAR(150) NOT NULL,
   `email`         VARCHAR(255) NOT NULL UNIQUE,
+  `phone`         VARCHAR(20) DEFAULT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
-  `role`          ENUM('admin','gestor','viewer') NOT NULL DEFAULT 'gestor',
+  `role`          ENUM('admin','gestor','usuario') NOT NULL DEFAULT 'usuario',
   `created_at`    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`    DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-);
+) AUTO_ID_CACHE=1;
 
-CREATE TABLE IF NOT EXISTS `stations` (
+-- =============================================
+-- TABELA DE POSTOS DE COMBUSTÍVEL
+-- =============================================
+CREATE TABLE `stations` (
   `id`         INT NOT NULL AUTO_INCREMENT,
   `name`       VARCHAR(200) NOT NULL,
   `address`    VARCHAR(255) NOT NULL,
@@ -22,9 +33,12 @@ CREATE TABLE IF NOT EXISTS `stations` (
   `longitude`  DECIMAL(11, 8),
   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-);
+) AUTO_ID_CACHE=1;
 
-CREATE TABLE IF NOT EXISTS `fuels` (
+-- =============================================
+-- TABELA DE COMBUSTÍVEIS POR POSTO
+-- =============================================
+CREATE TABLE `fuels` (
   `id`           INT NOT NULL AUTO_INCREMENT,
   `station_id`   INT NOT NULL,
   `type`         ENUM('Gasolina','Gasóleo','GPL','Jet A1') NOT NULL,
@@ -35,14 +49,17 @@ CREATE TABLE IF NOT EXISTS `fuels` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_station_fuel` (`station_id`, `type`),
   CONSTRAINT `fk_fuels_station` FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`) ON DELETE CASCADE
-);
+) AUTO_ID_CACHE=1;
 
-CREATE TABLE IF NOT EXISTS `refueling_records` (
+-- =============================================
+-- TABELA DE REGISTOS DE ABASTECIMENTO
+-- =============================================
+CREATE TABLE `refueling_records` (
   `id`           INT NOT NULL AUTO_INCREMENT,
   `station_id`   INT NOT NULL,
   `fuel_type`    ENUM('Gasolina','Gasóleo','GPL','Jet A1') NOT NULL,
   `quantity`     INT NOT NULL,
-  `operator_id`  INT DEFAULT NULL,
+  `operator_id`  INT UNSIGNED DEFAULT NULL,
   `refuel_date`  DATE NOT NULL,
   `refuel_time`  TIME NOT NULL,
   `observations` TEXT,
@@ -50,19 +67,15 @@ CREATE TABLE IF NOT EXISTS `refueling_records` (
   PRIMARY KEY (`id`),
   KEY `idx_refuel_station` (`station_id`),
   KEY `idx_refuel_operator` (`operator_id`),
-  CONSTRAINT `fk_refuel_station` FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`) ON DELETE CASCADE
-);
+  CONSTRAINT `fk_refuel_station` FOREIGN KEY (`station_id`) REFERENCES `stations` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_refuel_operator` FOREIGN KEY (`operator_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) AUTO_ID_CACHE=1;
 
-INSERT IGNORE INTO `users` (`id`, `name`, `email`, `password_hash`, `role`) VALUES
-(1, 'Administrador FuelMap', 'admin@fuelmap.co.mz', '$2a$12$tqHV4O3GNKSa8D6pV0rB5.hkQm6xZzUlbXnZ7kzNp1Qa3XeN5GNEG', 'admin');
+-- =============================================
+-- DADOS ESSENCIAIS (Apenas Admin)
+-- Nenhuma estação ou combustível é injetado. Tudo será criado via API.
+-- =============================================
 
-INSERT IGNORE INTO `stations` (`id`, `name`, `address`, `city`, `district`, `provider`, `latitude`, `longitude`) VALUES
-(1, 'Petromoc — Av. Julius Nyerere', 'Av. Julius Nyerere, 1234', 'Maputo', 'Sommerschield', 'petromoc', -25.9625, 32.5832),
-(2, 'Galp — Av. Eduardo Mondlane',   'Av. Eduardo Mondlane, 567', 'Maputo', 'Alto Maé',      'galp',     -25.9669, 32.5857);
-
-INSERT IGNORE INTO `fuels` (`station_id`, `type`, `price`, `stock_liters`, `max_capacity`) VALUES
-(1, 'Gasolina', 89.50,  8400,  15000),
-(1, 'Gasóleo',  75.00, 12100,  20000),
-(2, 'Gasolina', 89.50,   900,  15000),
-(2, 'Gasóleo',  75.00,  5200,  20000),
-(2, 'GPL',      45.00,   200,   5000);
+-- Admin padrão (password: admin123)
+INSERT INTO `users` (`name`, `email`, `password_hash`, `role`) VALUES
+('Administrador FuelMap', 'admin@fuelmap.co.mz', '$2a$12$tqHV4O3GNKSa8D6pV0rB5.hkQm6xZzUlbXnZ7kzNp1Qa3XeN5GNEG', 'admin');

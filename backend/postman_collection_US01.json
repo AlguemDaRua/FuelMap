@@ -1,0 +1,99 @@
+{
+  "info": {
+    "name": "FuelMap — US01 Registo e Autenticação",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Colecção completa com os cenários de sucesso e falha."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "http://localhost:5000/", "host": ["http://localhost", "5000", ""] }
+      }
+    },
+    {
+      "name": "2. Registo — Utilizador (Sucesso)",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/auth/register" },
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Cliente Teste\",\n  \"email\": \"cliente@fuelmap.co.mz\",\n  \"phone\": \"+258840000001\",\n  \"password\": \"senha123\",\n  \"role\": \"usuario\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "if (jsonData.token) { pm.environment.set('token', jsonData.token); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Registo — Gestor (Sucesso)",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/auth/register" },
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Gestor da Bomba\",\n  \"email\": \"gestor@bomba.co.mz\",\n  \"phone\": \"+258840000002\",\n  \"password\": \"senha123\",\n  \"role\": \"gestor\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "if (jsonData.token) { pm.environment.set('token', jsonData.token); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Login",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/auth/login" },
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"gestor@bomba.co.mz\",\n  \"password\": \"senha123\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "var jsonData = pm.response.json();",
+              "if (jsonData.token) { pm.environment.set('token', jsonData.token); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Perfil (Requer Token)",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/auth/me" },
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" }
+        ]
+      }
+    }
+  ]
+}
